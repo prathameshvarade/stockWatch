@@ -1,14 +1,13 @@
+from app.database import engine
 from fastapi import FastAPI
+from app.config import settings
 
-app = FastAPI(
-    title="Stock Price Tracker API",
-    version="1.0.0",
-    description="Backend API for the Stock Price Tracker project."
-)
+app = FastAPI()
 
 
 @app.get("/")
 def root():
+    print(engine)
     return {
-        "message": "Stock Price Tracker API is running!"
+        "database": settings.DATABASE_URL
     }
