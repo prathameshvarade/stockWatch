@@ -1,13 +1,18 @@
-from app.database import engine
 from fastapi import FastAPI
-from app.config import settings
 
-app = FastAPI()
+from app.database import Base, engine
+from app.models.user import User
+
+app = FastAPI(
+    title="StockWatch API",
+    version="1.0.0"
+)
+
+Base.metadata.create_all(bind=engine)
 
 
 @app.get("/")
 def root():
-    print(engine)
     return {
-        "database": settings.DATABASE_URL
+        "message": "Welcome to StockWatch API 🚀"
     }
