@@ -2,14 +2,14 @@ from fastapi import HTTPException, status
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm import Session
 
-from app.auth.password import hash_password
+from app.auth.jwt import create_access_token
+from app.auth.password import hash_password, verify_password
 from app.models.user import User
-from app.schemas.user import UserCreate
+from app.schemas.user import UserCreate, UserLogin
 
 
 def register_user(user: UserCreate, db: Session):
 
-    # Check username
     existing_username = (
         db.query(User)
         .filter(User.username == user.username)
@@ -22,7 +22,6 @@ def register_user(user: UserCreate, db: Session):
             detail="Username already exists"
         )
 
-    # Check email
     existing_email = (
         db.query(User)
         .filter(User.email == user.email)
@@ -55,3 +54,35 @@ def register_user(user: UserCreate, db: Session):
         )
 
     return new_user
+
+
+def login_user(user: UserLogin, db: Session):
+
+    existing_user = (
+        db.query(User)
+        .filter(User.email == user.email)
+        .first()
+    )
+
+    if not existing_user:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid email or password"
+        )
+
+    if not verify_password(user.password, existing_user.password):
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid email or password"
+        )
+
+    access_token = create_access_token(
+        {
+            "sub": existing_user.email
+        }
+    )
+
+    return {
+        "access_token": access_token,
+        "token_type": "bearer"
+    }
